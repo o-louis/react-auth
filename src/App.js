@@ -8,13 +8,15 @@ import Login from './components/Login';
 import PrivateRoute from './PrivateRoute';
 import { AuthContext } from "./context/auth";
 
+import Loader from 'react-loader-spinner';
 import { BrowserRouter as Router, Route } from "react-router-dom";
 
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            isLoggedIn: false
+            isLoggedIn: false,
+            isSendingRequest: false
         }
 
         this.setUserToken = this.setUserToken.bind(this);
@@ -24,7 +26,12 @@ class App extends React.Component {
     componentDidMount() {
         const userToken = localStorage.getItem("userToken");
         const isLoggedIn = userToken ? true : false;
-        this.setState({ isLoggedIn }, () => console.log("isLoggedIn : " + this.state.isLoggedIn));
+        this.setState(state => {
+            return { 
+                isLoggedIn,
+                isSendingRequest: !state.isSendingRequest
+            }
+        });
     }
 
     setUserToken(data) {
@@ -38,19 +45,26 @@ class App extends React.Component {
     }
 
     render() {
+
         return (
             <AuthContext.Provider 
                 value={{
+                    logoutUser: this.logoutUser,
+                    setUserToken: this.setUserToken,
                     isLoggedIn: this.state.isLoggedIn,
-                    setUserToken: this.setUserToken ,
-                    logoutUser: this.logoutUser
                 }} >
                 <Router>
                     <Navbar />
 
-                    <Route exact path="/" component={Home} />
-                    <Route exact path="/login" component={Login} />
-                    <PrivateRoute path="/admin" component={Admin} />
+                    {this.state.isSendingRequest ? (
+                        <React.Fragment>
+                            <PrivateRoute exact path="/admin" component={Admin} />
+                            <Route exact path="/login" component={Login} />
+                            <Route exact path="/" component={Home} />
+                        </React.Fragment>
+                    ) : (
+                        <Loader type="Oval" color="#00BFFF" height={50} width={50} />
+                    )}
                 </Router>
             </AuthContext.Provider>
         )
